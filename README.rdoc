@@ -1,7 +1,12 @@
-= rack-regenerate
+= Rack Regenerate
 
-Description goes here.
+== Usage
 
-== Copyright
+In your rackup file, simply <tt>use Rack::Regenerate</tt>.
 
-Copyright (c) 2009 Joshua Hull. See LICENSE for details.
+If you want a request periodically updated, just send back a header that looks like this:
+<tt>X-Cache-Regenerate: [interval in seconds] [number of times to call]</tt>
+
+If for example you sent a header of <tt>X-Cache-Regenerate: 10 20</tt> then the page will be called every 10 seconds 20 times.
+
+If you want a regeneration job to run indefinitely, use -1 for the second argument.

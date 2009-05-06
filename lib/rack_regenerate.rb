@@ -31,7 +31,8 @@ module Rack
             current_id = Time.now.to_i
             @schedule_mutex.synchronize do
               if jobs = @schedule.next(current_id)
-                jobs.each do |job|
+                job_url_hash = jobs.inject({}) { |h, job| h[job.url] = job unless h[job.url]; h }
+                job_url_hash.each do |url, job|
                   if new_job = job.decr
                     @fetch_queue << job.url
                     @schedule.add(current_id + new_job.interval, new_job)
@@ -55,6 +56,7 @@ module Rack
         timing = cache_regenerate.split(' ').map{|part| part.to_i}
         @schedule_mutex.synchronize { @schedule.add(Time.now.to_i + timing.first, Job.new(Rack::Request.new(env).url, timing.first, timing.last)) }
       end
+      response[1].delete('X-Cache-Regenerate')
       response
     end
     
@@ -69,7 +71,14 @@ module Rack
       end
       
       def decr
-        count > 0 ? Job.new(url, interval, count - 1) : nil
+        case count
+        when -1
+          Job.new(url, interval, count)
+        when 0
+          nil
+        else
+          Job.new(url, interval, count - 1)
+        end
       end
       
     end
